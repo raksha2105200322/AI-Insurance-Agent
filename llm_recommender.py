@@ -36,9 +36,10 @@ def generate_recommendation(profile_text, retrieved_chunks):
 
     start = time.time()
     response = requests.post(
-        "http://localhost:11434/api/generate",
-        json={"model": "gemma3:4b", "prompt": prompt},
-    )
+    "http://localhost:12000/api/generate",
+    json={"model": "mistral", "prompt": prompt},
+)
+
     end = time.time()
 
     if response.status_code == 200:
