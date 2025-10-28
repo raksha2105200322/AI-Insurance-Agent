@@ -1,18 +1,15 @@
 # recommender.py
-# This file retrieves top similar chunks and generates product recommendations
-
 import numpy as np
 
-def search_similar_chunks(query, model, index, chunks, sources, top_k=3):
+def search_similar_chunks(query, model, index, chunks, sources, chunk_ids, top_k=3):
     query_embedding = model.encode([query])
-    distances, indices = index.search(np.array(query_embedding), top_k)
-
+    D, I = index.search(np.array(query_embedding, dtype=np.float32), top_k)
     results = []
-    for i, idx in enumerate(indices[0]):
+    for score, idx in zip(D[0], I[0]):
         results.append({
-            "chunk_id": int(idx),
-            "relevance_score": float(1 - distances[0][i]),
+            "chunk_id": int(chunk_ids[idx]),          # ✅ added
+            "relevance_score": float(score),
             "source": sources[idx],
-            "text_preview": chunks[idx][:200] + "..."
+            "text_preview": chunks[idx][:300]
         })
     return results

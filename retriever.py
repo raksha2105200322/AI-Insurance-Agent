@@ -49,7 +49,7 @@ def process_documents(folder_path):
             doc_sources.extend([filename] * len(chunks))
             
             # assign chunk IDs
-            for _ in chunks:              # ✅ added
+            for _ in chunks:
                 chunk_ids.append(chunk_counter)
                 chunk_counter += 1
 
@@ -64,5 +64,5 @@ def process_documents(folder_path):
         "vector_store_size": f"{embeddings.nbytes / 1e6:.2f} MB"
     })
 
-    # ✅ Now return chunk_ids too
+    # ✅ return chunk_ids too
     return index, all_chunks, doc_sources, chunk_ids
