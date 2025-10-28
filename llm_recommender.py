@@ -1,64 +1,91 @@
 # llm_recommender.py
+# Connects your RAG system to Ollama (Mistral) for recommendations
+
 import requests
 import json
 import time
 
-def generate_recommendation(user_profile, top_chunks):
+
+def generate_recommendation(profile_text, retrieved_chunks):
     """
-    Sends user profile + relevant document info to local Ollama (Llama2)
-    and returns structured insurance recommendations.
+    profile_text: str -> customer's information
+    retrieved_chunks: list of top chunks retrieved from FAISS
+    """
+
+    # Combine retrieved info for context
+    context = "\n\n".join(retrieved_chunks[:3])  # use top 3 chunks
+
+    # Build the prompt for the LLM
+    prompt = f"""
+    You are an AI Insurance Advisor.
+    Based on the following customer profile and insurance product information,
+    suggest the best insurance product with confidence score, key features,
+    and reasons for recommendation.
+
+    Customer Profile:
+    {profile_text}
+
+    Relevant Product Information:
+    {context}
+
+    Return output in structured JSON:
+    {{
+        "llm_model": "mistral",
+        "recommendations": [
+            {{
+                "product_name": "...",
+                "confidence_score": 90,
+                "monthly_premium": "...",
+                "key_features": ["..."],
+                "match_reasons": ["..."]
+            }}
+        ],
+        "cross_sell_opportunities": ["..."],
+        "generation_time": "... seconds"
+    }}
     """
 
     start = time.time()
 
-    # Build prompt
-    context_text = "\n\n".join(top_chunks)
-    prompt = f"""
-    You are an AI Insurance Advisor.
-    Based on the following customer profile and insurance product details,
-    recommend the best insurance product with reasons, key features, and confidence score.
+    try:
+        # ✅ Use Mistral model from Ollama
+        response = requests.post(
+            "http://localhost:11434/api/generate",
+            json={"model": "mistral", "prompt": prompt},
+            timeout=300
+        )
 
-    Customer Profile:
-    {user_profile}
+        end = time.time()
 
-    Product Information:
-    {context_text}
+        # ✅ Handle successful response
+        if response.status_code == 200:
+            # Streamed JSON lines come from Ollama; collect the final text
+            output_text = ""
+            for line in response.iter_lines():
+                if line:
+                    try:
+                        data = json.loads(line.decode("utf-8"))
+                        if "response" in data:
+                            output_text += data["response"]
+                    except Exception:
+                        continue
 
-    Format output as JSON:
-    {{
-      "llm_model": "llama2:7b",
-      "recommendations": [
-        {{
-          "product_name": "...",
-          "confidence_score": 90,
-          "monthly_premium": "$...",
-          "key_features": ["..."],
-          "match_reasons": ["..."]
-        }}
-      ],
-      "cross_sell_opportunities": ["..."],
-      "conversation_insights": {{ }},
-      "generation_time": "x.xx seconds"
-    }}
-    """
+            # Try to parse as JSON, fallback to raw text
+            try:
+                parsed = json.loads(output_text)
+            except Exception:
+                parsed = {"llm_model": "mistral", "raw_output": output_text.strip()}
 
-    # Send to Ollama’s local server
-    response = requests.post(
-        "http://localhost:11434/api/generate",
-        json={"model": "llama2", "prompt": prompt},
-        stream=True
-    )
+            parsed["generation_time"] = f"{end - start:.2f} seconds"
+            return parsed
 
-    output = ""
-    for line in response.iter_lines():
-        if line:
-            data = json.loads(line.decode("utf-8"))
-            if "response" in data:
-                output += data["response"]
+        else:
+            # Non-200 response from Ollama API
+            return {
+                "error": f"Failed to connect to Ollama (HTTP {response.status_code})",
+                "details": response.text
+            }
 
-    end = time.time()
-    return {
-        "model": "llama2:7b",
-        "response": output.strip(),
-        "generation_time": f"{end - start:.2f} seconds"
-    }
+    except requests.exceptions.RequestException as e:
+        # Network or timeout error
+        return {"error": "Could not reach Ollama server", "details": str(e)}
