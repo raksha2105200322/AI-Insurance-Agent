@@ -52,10 +52,18 @@ if folder_path:
     st.caption(" Phase 1 and Phase 2 completed successfully.")
 
     
-#  Phase 3: Product Recommendation (Ollama)
-if query and results:
-    st.subheader(" AI-Generated Product Recommendation (Llama 2)")
-    rec = generate_recommendation_ollama(query, results)
+# Step 3: Generate Recommendation using Llama2 (Ollama)
+st.header("Personalized Insurance Recommendation ")
+
+profile_text = st.text_area("Enter customer profile (age, income, family size, coverage needs, etc.):")
+
+if st.button("Generate Recommendation"):
+    st.info("Generating recommendation using Llama2... please wait.")
+
+    # Simulate retrieving relevant chunks (top 5)
+    top_chunks = [r["text_preview"] for r in results[:5]] if query else chunks[:5]
+
+    rec = generate_recommendation(profile_text, top_chunks)
     st.json(rec)
-    st.caption(" Phase 3 completed with Llama 2 model.")
+
 
