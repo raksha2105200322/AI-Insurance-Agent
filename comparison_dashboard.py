@@ -1,95 +1,87 @@
-# comparison.py
-# Compare Embedding Models (MiniLM vs MPNet)
-# and LLMs (Llama2 vs Mistral vs Phi vs Gemma3:4b)
-# Auto-selects best models for your system
+# comparison_dashboard.py
+# Combines model performance benchmarking + Streamlit visualization
 
 import time
-from sentence_transformers import SentenceTransformer
+import os
 import requests
 import platform
 import psutil
+import pandas as pd
+import matplotlib.pyplot as plt
+import streamlit as st
+from sentence_transformers import SentenceTransformer
 
 # -----------------------------
-# EMBEDDING MODEL COMPARISON
+# STEP 1: Compare Embedding Models
 # -----------------------------
 def compare_embedding_models(sample_text):
     models = ["all-MiniLM-L6-v2", "all-mpnet-base-v2"]
     results = []
-
-    print("\n🔹 Comparing Embedding Models...\n")
     for model_name in models:
         start = time.time()
         try:
             model = SentenceTransformer(model_name, device='cpu')
-            embedding = model.encode([sample_text])
+            model.encode([sample_text])
             end = time.time()
             results.append({
-                "model": model_name,
-                "vector_dimension": model.get_sentence_embedding_dimension(),
-                "time_taken": round(end - start, 2),
-                "status": " Success"
+                "Model": model_name,
+                "Vector Dimension": model.get_sentence_embedding_dimension(),
+                "Time Taken (s)": round(end - start, 2),
+                "Status": " Success"
             })
         except Exception as e:
             results.append({
-                "model": model_name,
-                "vector_dimension": None,
-                "time_taken": None,
-                "status": f" Failed: {str(e)}"
+                "Model": model_name,
+                "Vector Dimension": None,
+                "Time Taken (s)": None,
+                "Status": f"❌ Failed: {str(e)}"
             })
-
     return results
 
 
 # -----------------------------
-# LLM MODEL COMPARISON
+# STEP 2: Compare LLM Models
 # -----------------------------
 def compare_llm_models(prompt):
     models = ["mistral", "phi", "llama2", "gemma3:4b"]
     results = []
-
-    print("\n🔹 Comparing LLM Models...\n")
     for model in models:
         start = time.time()
         try:
             response = requests.post(
                 "http://localhost:11434/api/generate",
                 json={"model": model, "prompt": prompt},
-                timeout=120
+                timeout=90
             )
             end = time.time()
             if response.status_code == 200:
                 results.append({
-                    "llm_model": model,
-                    "generation_time": round(end - start, 2),
-                    "status": " Success"
+                    "Model": model,
+                    "Generation Time (s)": round(end - start, 2),
+                    "Status": " Success"
                 })
             else:
                 results.append({
-                    "llm_model": model,
-                    "generation_time": None,
-                    "status": f" Failed ({response.status_code})"
+                    "Model": model,
+                    "Generation Time (s)": None,
+                    "Status": f" Failed ({response.status_code})"
                 })
         except Exception as e:
             results.append({
-                "llm_model": model,
-                "generation_time": None,
-                "status": f" Error: {str(e)}"
+                "Model": model,
+                "Generation Time (s)": None,
+                "Status": f" Error: {str(e)}"
             })
-
     return results
 
 
 # -----------------------------
-# RECOMMENDATION + REPORT
+# STEP 3: Generate System Report
 # -----------------------------
 def system_based_recommendation(emb_results, llm_results):
-    print("\n System Information:")
     os_info = f"{platform.system()} {platform.release()}"
     cpu_cores = psutil.cpu_count(logical=True)
     ram_gb = round(psutil.virtual_memory().total / (1024 ** 3), 2)
-    print(f"OS: {os_info}")
-    print(f"CPU Cores: {cpu_cores}")
-    print(f"RAM Available: {ram_gb} GB\n")
 
     report_lines = []
     report_lines.append("AI Insurance Agent — Model Comparison Report")
@@ -98,57 +90,82 @@ def system_based_recommendation(emb_results, llm_results):
     report_lines.append(f"CPU Cores: {cpu_cores}")
     report_lines.append(f"RAM: {ram_gb} GB\n")
 
-    # Determine best embedding model
-    successful_emb = [r for r in emb_results if r['status'].startswith('✅')]
-    if successful_emb:
-        best_emb = sorted(successful_emb, key=lambda x: x['time_taken'])[0]
-        print(f"🏆 Best Embedding Model: {best_emb['model']} (Fastest and stable)")
-        report_lines.append(f"🏆 Best Embedding Model: {best_emb['model']}")
-    else:
-        report_lines.append("⚠️ No embedding model succeeded.")
+    best_emb = sorted(
+        [r for r in emb_results if r["Status"].startswith("✅")],
+        key=lambda x: x["Time Taken (s)"]
+    )[0]
+    report_lines.append(f" Best Embedding Model: {best_emb['Model']}")
 
-    # Determine best LLM model
-    valid_llms = [r for r in llm_results if r['status'].startswith('✅')]
+    valid_llms = [r for r in llm_results if r["Status"].startswith("✅")]
     if valid_llms:
-        best_llm = sorted(valid_llms, key=lambda x: x['generation_time'])[0]
-        print(f" Best LLM Model: {best_llm['llm_model']} (Quickest response time)")
-        report_lines.append(f" Best LLM Model: {best_llm['llm_model']}")
+        best_llm = sorted(valid_llms, key=lambda x: x["Generation Time (s)"])[0]
+        report_lines.append(f" Best LLM Model: {best_llm['Model']}")
     else:
-        print(" No LLM ran successfully — try a smaller model.")
         report_lines.append(" No LLM ran successfully.")
 
-    # Final summary
-    report_lines.append("\n Final System Recommendation:")
+    # Recommendations
+    report_lines.append("\n Final Recommendation:")
     if ram_gb < 8:
         report_lines.append("- Recommended LLM: phi (lightweight & fast)")
     elif ram_gb < 12:
         report_lines.append("- Recommended LLM: mistral (balanced performance)")
     else:
         report_lines.append("- Recommended LLM: gemma3:4b (best quality)")
+    report_lines.append("- Recommended Embedding: all-MiniLM-L6-v2")
 
-    report_lines.append("- Recommended Embedding Model: all-MiniLM-L6-v2 (best speed-memory balance)")
-
-    # Save report
-    # Save report ( fixed encoding + indentation)
     with open("comparison_report.txt", "w", encoding="utf-8") as f:
         f.write("\n".join(report_lines))
-
-    print("\n Report saved as 'comparison_report.txt'")
+    return report_lines
 
 
 # -----------------------------
-# MAIN EXECUTION
+# STEP 4: Streamlit Visualization
 # -----------------------------
-if __name__ == "__main__":
-    sample_text = "Health insurance provides financial protection for medical expenses."
-    prompt = "Suggest an ideal insurance plan for a 35-year-old married person with 2 kids."
+st.set_page_config(page_title="AI Model Comparison Dashboard", layout="centered")
 
-    emb_results = compare_embedding_models(sample_text)
-    for r in emb_results:
-        print(r)
+st.title(" AI Insurance Agent — Model Comparison Dashboard")
+st.info("This dashboard compares embedding and LLM models for RAG-based insurance systems.")
 
-    llm_results = compare_llm_models(prompt)
-    for r in llm_results:
-        print(r)
+sample_text = "Health insurance provides protection for medical emergencies."
+prompt = "Suggest an ideal insurance plan for a 35-year-old married person with 2 kids."
 
-    system_based_recommendation(emb_results, llm_results)
+if st.button(" Run Full Model Comparison"):
+    with st.spinner("Running model comparisons... Please wait "):
+        emb_results = compare_embedding_models(sample_text)
+        llm_results = compare_llm_models(prompt)
+        report_lines = system_based_recommendation(emb_results, llm_results)
+    st.success(" Comparison complete! See results below.")
+
+    # Display full report
+    st.text_area(" System Report", "\n".join(report_lines), height=250)
+
+    # Convert to DataFrames
+    df_emb = pd.DataFrame(emb_results)
+    df_llm = pd.DataFrame(llm_results)
+
+    # Charts
+    st.subheader(" Embedding Model Performance")
+    fig1, ax1 = plt.subplots()
+    ax1.bar(df_emb["Model"], df_emb["Time Taken (s)"], color=["#4CAF50", "#FFC107"])
+    ax1.set_ylabel("Time (s)")
+    ax1.set_title("Embedding Model Speed (Lower is Better)")
+    st.pyplot(fig1)
+
+    st.subheader("🤖 LLM Model Generation Time")
+    fig2, ax2 = plt.subplots()
+    colors = ["#2196F3", "#9C27B0", "#E91E63", "#00BCD4"]
+    ax2.bar(df_llm["Model"], df_llm["Generation Time (s)"], color=colors)
+    ax2.set_ylabel("Response Time (s)")
+    ax2.set_title("LLM Model Response Speed (Lower is Better)")
+    st.pyplot(fig2)
+
+    st.subheader("🏆 Recommended Models")
+    best_emb = df_emb.loc[df_emb["Time Taken (s)"].idxmin(), "Model"]
+    best_llm = df_llm.loc[df_llm["Generation Time (s)"].idxmin(), "Model"]
+    st.success(f"Best Embedding Model: **{best_emb}**")
+    st.success(f"Best LLM Model: **{best_llm}**")
+
+    st.download_button(" Download Report", "\n".join(report_lines), file_name="comparison_report.txt")
+
+else:
+    st.info("Click the button above to start comparison.")
