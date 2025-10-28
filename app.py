@@ -1,64 +1,67 @@
-# app.py
-
 import streamlit as st
+import json
 import os
-import time
-from ollama_recommender import generate_recommendation_ollama
 from llm_recommender import generate_recommendation
 from retriever import process_documents
-from recommender import search_similar_chunks
-from sentence_transformers import SentenceTransformer
 
-st.title("AI Insurance Agent Assistant")
+CHAT_FILE = "chat_history.json"
 
-# Step 1: Upload PDF folder path
-folder_path = st.text_input("Enter the folder path containing insurance PDFs:")
+# -----------------------------------
+# Function to load existing chat
+# -----------------------------------
+def load_chat_history():
+    if os.path.exists(CHAT_FILE):
+        with open(CHAT_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
 
-if folder_path:
-    st.info("Processing documents... please wait.")
+# -----------------------------------
+# Function to save chat
+# -----------------------------------
+def save_chat_history(history):
+    with open(CHAT_FILE, "w", encoding="utf-8") as f:
+        json.dump(history, f, indent=4, ensure_ascii=False)
 
-    start_time = time.time()  #  Track processing time
-    index, chunks, sources, chunk_ids = process_documents(folder_path)
-    processing_time = time.time() - start_time
+# -----------------------------------
+# Initialize or load session
+# -----------------------------------
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = load_chat_history()
 
-    st.success("Documents processed successfully!")
+# -----------------------------------
+# Streamlit UI
+# -----------------------------------
+st.title("💬 AI Insurance Agent — Conversation Chat")
 
-    #  Show Phase 1 Summary inside Streamlit
-    st.subheader(" Document Processing Summary")
-    st.json({
-        "total_documents": len([f for f in os.listdir(folder_path) if f.endswith('.pdf')]),
-        "total_chunks": len(chunks),
-        "embedding_model": "all-MiniLM-L6-v2",
-        "vector_dimension": 384,
-        "vector_store_size": f"{len(chunks) * 384 * 4 / 1e6:.2f} MB",
-        "processing_time": f"{processing_time:.2f} seconds"
-    })
+# Input section
+user_query = st.text_input("Ask a customer query:")
 
-    # Step 2: Ask user query
-    query = st.text_input("Ask a customer query:")
-    if query:
-        st.info("Searching for relevant information...")
-        model = SentenceTransformer('all-MiniLM-L6-v2')
-        results = search_similar_chunks(query, model, index, chunks, sources, chunk_ids)
+if st.button("Send"):
+    if user_query.strip():
+        # Add user query
+        st.session_state.chat_history.append({"role": "user", "content": user_query})
 
-        st.subheader(" Top Matches:")
-        for r in results:
-            st.markdown(f"**Chunk ID:** {r['chunk_id']}")
-            st.markdown(f"**Source:** {r['source']}")
-            st.markdown(f"**Relevance Score:** {r['relevance_score']:.2f}")
-            st.write(f"**Text Preview:** {r['text_preview']}")
-            st.markdown("---")
+        # Generate AI recommendation
+        profile_text = "Age: 35, Married, 2 kids, looking for family coverage"
+        retrieved_chunks = ["Basic Health Plan", "Family Protection Plan", "Senior Health Plus"]
 
-    st.caption(" Phase 1 and Phase 2 completed successfully.")
+        response = generate_recommendation(profile_text, retrieved_chunks)
 
-    
-# Step 3: Generate Recommendation using Llama2 (Ollama)
+        # Convert response dict to readable text
+        response_text = json.dumps(response, indent=2)
 
+        st.session_state.chat_history.append({"role": "assistant", "content": response_text})
 
-st.subheader("Generate AI Recommendation ")
-if st.button("Get Recommendation"):
-    profile = st.text_area("Enter customer profile:")
-    if profile:
-        top_texts = [r["text_preview"] for r in results]
-        rec_output = generate_recommendation(profile, top_texts)
-        st.json(rec_output)
+        # Save to file
+        save_chat_history(st.session_state.chat_history)
+
+# -----------------------------------
+# Display chat history
+# -----------------------------------
+st.subheader("🗂 Conversation History")
+
+for msg in st.session_state.chat_history:
+    if msg["role"] == "user":
+        st.markdown(f"🧑 **You:** {msg['content']}")
+    else:
+        st.markdown(f"🤖 **AI:** {msg['content']}")
