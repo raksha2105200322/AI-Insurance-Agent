@@ -3,12 +3,13 @@
 import streamlit as st
 import os
 import time
+from ollama_recommender import generate_recommendation_ollama
 from llm_recommender import generate_recommendation
 from retriever import process_documents
 from recommender import search_similar_chunks
 from sentence_transformers import SentenceTransformer
 
-st.title("AI Insurance Agent Assistant 🧠")
+st.title("AI Insurance Agent Assistant")
 
 # Step 1: Upload PDF folder path
 folder_path = st.text_input("Enter the folder path containing insurance PDFs:")
@@ -16,14 +17,14 @@ folder_path = st.text_input("Enter the folder path containing insurance PDFs:")
 if folder_path:
     st.info("Processing documents... please wait.")
 
-    start_time = time.time()  # ✅ Track processing time
+    start_time = time.time()  #  Track processing time
     index, chunks, sources, chunk_ids = process_documents(folder_path)
     processing_time = time.time() - start_time
 
     st.success("Documents processed successfully!")
 
-    # ✅ Show Phase 1 Summary inside Streamlit
-    st.subheader("📊 Document Processing Summary")
+    #  Show Phase 1 Summary inside Streamlit
+    st.subheader(" Document Processing Summary")
     st.json({
         "total_documents": len([f for f in os.listdir(folder_path) if f.endswith('.pdf')]),
         "total_chunks": len(chunks),
@@ -40,7 +41,7 @@ if folder_path:
         model = SentenceTransformer('all-MiniLM-L6-v2')
         results = search_similar_chunks(query, model, index, chunks, sources, chunk_ids)
 
-        st.subheader("💬 Top Matches:")
+        st.subheader(" Top Matches:")
         for r in results:
             st.markdown(f"**Chunk ID:** {r['chunk_id']}")
             st.markdown(f"**Source:** {r['source']}")
@@ -48,12 +49,13 @@ if folder_path:
             st.write(f"**Text Preview:** {r['text_preview']}")
             st.markdown("---")
 
-    st.caption("✅ Phase 1 and Phase 2 completed successfully.")
+    st.caption(" Phase 1 and Phase 2 completed successfully.")
 
-    # ✅ Phase 3: Product Recommendation
+    
+#  Phase 3: Product Recommendation (Ollama)
 if query and results:
-    st.subheader("🤖 AI-Generated Product Recommendation")
-    rec = generate_recommendation(query, results)
+    st.subheader(" AI-Generated Product Recommendation (Llama 2)")
+    rec = generate_recommendation_ollama(query, results)
     st.json(rec)
-    st.caption("✅ Phase 3: Product Recommendation complete.")
+    st.caption(" Phase 3 completed with Llama 2 model.")
 
