@@ -1,7 +1,9 @@
 # app.py
+
 import streamlit as st
 import os
 import time
+from llm_recommender import generate_recommendation
 from retriever import process_documents
 from recommender import search_similar_chunks
 from sentence_transformers import SentenceTransformer
@@ -47,3 +49,11 @@ if folder_path:
             st.markdown("---")
 
     st.caption("✅ Phase 1 and Phase 2 completed successfully.")
+
+    # ✅ Phase 3: Product Recommendation
+if query and results:
+    st.subheader("🤖 AI-Generated Product Recommendation")
+    rec = generate_recommendation(query, results)
+    st.json(rec)
+    st.caption("✅ Phase 3: Product Recommendation complete.")
+
