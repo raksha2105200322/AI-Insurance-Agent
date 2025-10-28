@@ -1,67 +1,82 @@
+# app.py — Optimized (Chat history removed)
 import streamlit as st
-import json
 import os
-from llm_recommender import generate_recommendation
+import time
+import json
+from sentence_transformers import SentenceTransformer
 from retriever import process_documents
+from recommender import search_similar_chunks
+from llm_recommender import generate_recommendation
 
-CHAT_FILE = "chat_history.json"
+# -------------------------------
+# Streamlit UI Setup
+# -------------------------------
+st.set_page_config(page_title="AI Insurance Agent Assistant", layout="centered")
+st.title("🧠 AI Insurance Agent Assistant")
 
-# -----------------------------------
-# Function to load existing chat
-# -----------------------------------
-def load_chat_history():
-    if os.path.exists(CHAT_FILE):
-        with open(CHAT_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return []
+# Step 1: Upload PDF folder path
+folder_path = st.text_input("📂 Enter the folder path containing insurance PDFs:")
 
-# -----------------------------------
-# Function to save chat
-# -----------------------------------
-def save_chat_history(history):
-    with open(CHAT_FILE, "w", encoding="utf-8") as f:
-        json.dump(history, f, indent=4, ensure_ascii=False)
+if folder_path:
+    st.info("Processing documents... please wait ⏳")
+    start_time = time.time()
 
-# -----------------------------------
-# Initialize or load session
-# -----------------------------------
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = load_chat_history()
+    # Process PDFs
+    index, chunks, sources, chunk_ids = process_documents(folder_path)
+    processing_time = time.time() - start_time
 
-# -----------------------------------
-# Streamlit UI
-# -----------------------------------
-st.title("💬 AI Insurance Agent — Conversation Chat")
+    st.success("✅ Documents processed successfully!")
 
-# Input section
-user_query = st.text_input("Ask a customer query:")
+    # Show Phase 1 Summary
+    st.subheader("📊 Document Processing Summary")
+    st.json({
+        "total_documents": len([f for f in os.listdir(folder_path) if f.endswith('.pdf')]),
+        "total_chunks": len(chunks),
+        "embedding_model": "all-MiniLM-L6-v2",
+        "vector_dimension": 384,
+        "vector_store_size": f"{len(chunks) * 384 * 4 / 1e6:.2f} MB",
+        "processing_time": f"{processing_time:.2f} seconds"
+    })
 
-if st.button("Send"):
-    if user_query.strip():
-        # Add user query
-        st.session_state.chat_history.append({"role": "user", "content": user_query})
+    # Step 2: Ask Query
+    query = st.text_input("💬 Ask a customer query:")
+    results = []
+    if query:
+        st.info("🔍 Searching for relevant information...")
+        model = SentenceTransformer('all-MiniLM-L6-v2')
+        results = search_similar_chunks(query, model, index, chunks, sources, chunk_ids)
 
-        # Generate AI recommendation
-        profile_text = "Age: 35, Married, 2 kids, looking for family coverage"
-        retrieved_chunks = ["Basic Health Plan", "Family Protection Plan", "Senior Health Plus"]
+        st.subheader("💡 Top Matches:")
+        for r in results:
+            st.markdown(f"**Chunk ID:** {r['chunk_id']}")
+            st.markdown(f"**Source:** {r['source']}")
+            st.markdown(f"**Relevance Score:** {r['relevance_score']:.2f}")
+            st.write(f"**Text Preview:** {r['text_preview']}")
+            st.markdown("---")
 
-        response = generate_recommendation(profile_text, retrieved_chunks)
+    st.caption("✅ Phase 1 and Phase 2 completed successfully.")
 
-        # Convert response dict to readable text
-        response_text = json.dumps(response, indent=2)
+    # Step 3: Generate Recommendation (LLM)
+    st.header("🤖 Personalized Insurance Recommendation")
 
-        st.session_state.chat_history.append({"role": "assistant", "content": response_text})
+    profile_text = st.text_area("✍️ Enter customer profile (age, income, family size, coverage needs, etc.):")
 
-        # Save to file
-        save_chat_history(st.session_state.chat_history)
+    if st.button("🚀 Generate Recommendation"):
+        st.info("Generating recommendation using Mistral... please wait ⏳")
 
-# -----------------------------------
-# Display chat history
-# -----------------------------------
-st.subheader("🗂 Conversation History")
+        top_chunks = [r["text_preview"] for r in results[:5]] if query else chunks[:5]
+        rec = generate_recommendation(profile_text, top_chunks)
 
-for msg in st.session_state.chat_history:
-    if msg["role"] == "user":
-        st.markdown(f"🧑 **You:** {msg['content']}")
-    else:
-        st.markdown(f"🤖 **AI:** {msg['content']}")
+        st.subheader("📋 Recommendation Result")
+        st.json(rec)
+
+        # Allow user to download recommendation report
+        st.download_button(
+            "📥 Download Recommendation Report",
+            json.dumps(rec, indent=4),
+            file_name="recommendation_report.json",
+            mime="application/json"
+        )
+
+else:
+    st.warning("⚠️ Please enter a valid folder path to continue.")
