@@ -1,21 +1,10 @@
-# llm_recommender.py
-# Connects your RAG system to Ollama (Mistral) for recommendations
-
 import requests
 import json
 import time
 
-
 def generate_recommendation(profile_text, retrieved_chunks):
-    """
-    profile_text: str -> customer's information
-    retrieved_chunks: list of top chunks retrieved from FAISS
-    """
+    context = "\n\n".join(retrieved_chunks[:3])
 
-    # Combine retrieved info for context
-    context = "\n\n".join(retrieved_chunks[:3])  # use top 3 chunks
-
-    # Build the prompt for the LLM
     prompt = f"""
     You are an AI Insurance Advisor.
     Based on the following customer profile and insurance product information,
@@ -30,7 +19,7 @@ def generate_recommendation(profile_text, retrieved_chunks):
 
     Return output in structured JSON:
     {{
-        "llm_model": "mistral",
+        "llm_model": "gemma3:4b",
         "recommendations": [
             {{
                 "product_name": "...",
@@ -46,46 +35,20 @@ def generate_recommendation(profile_text, retrieved_chunks):
     """
 
     start = time.time()
+    response = requests.post(
+        "http://localhost:11434/api/generate",
+        json={"model": "gemma3:4b", "prompt": prompt},
+    )
+    end = time.time()
 
-    try:
-        # ✅ Use Mistral model from Ollama
-        response = requests.post(
-            "http://localhost:11434/api/generate",
-            json={"model": "mistral", "prompt": prompt},
-            timeout=300
-        )
-
-        end = time.time()
-
-        # ✅ Handle successful response
-        if response.status_code == 200:
-            # Streamed JSON lines come from Ollama; collect the final text
-            output_text = ""
-            for line in response.iter_lines():
-                if line:
-                    try:
-                        data = json.loads(line.decode("utf-8"))
-                        if "response" in data:
-                            output_text += data["response"]
-                    except Exception:
-                        continue
-
-            # Try to parse as JSON, fallback to raw text
-            try:
-                parsed = json.loads(output_text)
-            except Exception:
-                parsed = {"llm_model": "mistral", "raw_output": output_text.strip()}
-
-            parsed["generation_time"] = f"{end - start:.2f} seconds"
-            return parsed
-
-        else:
-            # Non-200 response from Ollama API
-            return {
-                "error": f"Failed to connect to Ollama (HTTP {response.status_code})",
-                "details": response.text
-            }
-
-    except requests.exceptions.RequestException as e:
-        # Network or timeout error
-        return {"error": "Could not reach Ollama server", "details": str(e)}
+    if response.status_code == 200:
+        data = response.json()
+        output_text = data.get("response", "No response received")
+        try:
+            parsed = json.loads(output_text)
+        except:
+            parsed = {"llm_model": "gemma3:4b", "raw_output": output_text}
+        parsed["generation_time"] = f"{end - start:.2f} seconds"
+        return parsed
+    else:
+        return {"error": f"Failed to connect to Ollama: {response.status_code}"}
