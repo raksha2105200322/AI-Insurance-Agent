@@ -53,17 +53,12 @@ if folder_path:
 
     
 # Step 3: Generate Recommendation using Llama2 (Ollama)
-st.header("Personalized Insurance Recommendation ")
-
-profile_text = st.text_area("Enter customer profile (age, income, family size, coverage needs, etc.):")
-
-if st.button("Generate Recommendation"):
-    st.info("Generating recommendation using Llama2... please wait.")
-
-    # Simulate retrieving relevant chunks (top 5)
-    top_chunks = [r["text_preview"] for r in results[:5]] if query else chunks[:5]
-
-    rec = generate_recommendation(profile_text, top_chunks)
-    st.json(rec)
 
 
+st.subheader("Generate AI Recommendation ")
+if st.button("Get Recommendation"):
+    profile = st.text_area("Enter customer profile:")
+    if profile:
+        top_texts = [r["text_preview"] for r in results]
+        rec_output = generate_recommendation(profile, top_texts)
+        st.json(rec_output)
