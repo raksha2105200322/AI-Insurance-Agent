@@ -1,5 +1,5 @@
 # llm_recommender.py
-# Connects your RAG system to Ollama (Mistral) for recommendations
+# Connects RAG system to Ollama (Mistral) for recommendations
 
 import requests
 import json
@@ -48,7 +48,7 @@ def generate_recommendation(profile_text, retrieved_chunks):
     start = time.time()
 
     try:
-        #  Use Mistral model from Ollama
+        #  Using Mistral model from Ollama
         response = requests.post(
     "http://localhost:11434/api/generate",
     json={"model": "mistral", "prompt": prompt},

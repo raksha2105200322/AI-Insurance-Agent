@@ -56,7 +56,7 @@ if folder_path:
 
     st.caption(" Phase 1 and Phase 2 completed successfully.")
 
-    # Step 3: Generate Recommendation (LLM)
+    # Step 3: Generating Recommendation (LLM)
     st.header(" Personalized Insurance Recommendation")
 
     profile_text = st.text_area(" Enter customer profile (age, income, family size, coverage needs, etc.):")
@@ -70,7 +70,7 @@ if folder_path:
         st.subheader(" Recommendation Result")
         st.json(rec)
 
-        # Allow user to download recommendation report
+        # Allowing user to download recommendation report
         st.download_button(
             " Download Recommendation Report",
             json.dumps(rec, indent=4),
