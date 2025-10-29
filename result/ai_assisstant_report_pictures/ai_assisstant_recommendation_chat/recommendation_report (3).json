@@ -1,0 +1,27 @@
+{
+    "llm_model": "mistral",
+    "recommendations": [
+        {
+            "product_name": "Family Floater Policy with Maternity Coverage",
+            "confidence_score": 90,
+            "monthly_premium": "Approximately INR 3000 (This is an estimate and the actual premium may vary based on several factors)",
+            "key_features": [
+                "Coverage for the insured person and up to 3 children under the same policy",
+                "Maternity benefits for the insured person",
+                "New Born Cover for medical expenses related to the newborn baby while the insured person is hospitalized for delivery",
+                "In-patient benefit coverage for the new born child"
+            ],
+            "match_reasons": [
+                "The customer is 30 years old, has 3 children and a salary of INR 100000 per month. This profile matches the age, family size, and income requirements for this product",
+                "This policy provides coverage for both the insured person and their children, which is beneficial for a family with multiple members",
+                "The Maternity Coverage and New Born Cover features cater to the specific needs of the customer who is expecting a child"
+            ]
+        }
+    ],
+    "cross_sell_opportunities": [
+        "Pediatric Health Insurance for comprehensive coverage of the children's health",
+        "Accident Insurance for additional protection in case of accidents",
+        "Critical Illness Cover for financial support during critical illnesses"
+    ],
+    "generation_time": "211.61 seconds"
+}

@@ -1,0 +1,23 @@
+AI Insurance Agent — Model Comparison Report
+==================================================
+OS: OS Name:                       Microsoft Windows 11 Home Single Language
+OS Version:                    10.0.26100 N/A Build 26100
+CPU Cores: 8
+RAM: 7.75 GB
+
+🏆 Best Embedding Model: all-mpnet-base-v2
+🏆 Best LLM Model: gemma3:4b
+
+📋 Final Recommendation:
+- Recommended LLM: phi (lightweight & fast)
+- Recommended Embedding: all-MiniLM-L6-v2
+
+📊 Model Performance Summary:
+Embedding Models:
+- MiniLM: Faster, lightweight.
+- MPNet: More accurate but slower.
+LLM Models:
+- Llama2: Powerful but high memory.
+- Mistral: Best balanced.
+- Phi: Lightweight & fast.
+- Gemma3:4b: Heavy but accurate.
