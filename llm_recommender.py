@@ -88,3 +88,4 @@ def generate_recommendation(profile_text, retrieved_chunks):
     except requests.exceptions.RequestException as e:
         # Network or timeout error
         return {"error": "Could not reach Ollama server", "details": str(e)}
+ 

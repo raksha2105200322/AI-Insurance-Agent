@@ -104,4 +104,4 @@ def process_documents(folder_path):
     for k, v in summary.items():
         print(f"{k}: {v}")
 
-    return index, all_chunks, doc_sources, chunk_ids
+    return index, all_chunks, doc_sources, chunk_ids  

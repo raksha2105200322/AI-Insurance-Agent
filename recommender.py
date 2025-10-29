@@ -25,3 +25,4 @@ def search_similar_chunks(query, model, index, chunks, sources, chunk_ids, top_k
             "text_preview": chunks[idx][:300]
         })
     return results
+ 

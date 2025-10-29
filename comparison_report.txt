@@ -9,4 +9,4 @@ RAM: 7.75 GB
 📋 Recommendation:
 - For low RAM (<8GB): phi
 - For balanced systems (8–12GB): mistral
-- For high RAM (>12GB): gemma3:4b
+- For high RAM (>12GB): gemma3:4b 

@@ -154,4 +154,4 @@ if st.button("🚀 Run Optimized Model Comparison"):
     st.download_button("📥 Download Report", "\n".join(summary), file_name="comparison_report.txt")
 
 else:
-    st.info("Click above to start fast model comparison.")
+    st.info("Click above to start fast model comparison.") 
