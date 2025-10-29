@@ -1,0 +1,12 @@
+AI Insurance Agent — Optimized Model Comparison Report
+==================================================
+OS: Windows 10
+RAM: 7.75 GB
+
+🏆 Best Embedding Model: all-MiniLM-L6-v2
+🏆 Best LLM Model: mistral
+
+📋 Recommendation:
+- For low RAM (<8GB): phi
+- For balanced systems (8–12GB): mistral
+- For high RAM (>12GB): gemma3:4b

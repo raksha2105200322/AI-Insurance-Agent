@@ -12,23 +12,23 @@ from llm_recommender import generate_recommendation
 # Streamlit UI Setup
 # -------------------------------
 st.set_page_config(page_title="AI Insurance Agent Assistant", layout="centered")
-st.title("🧠 AI Insurance Agent Assistant")
+st.title(" AI Insurance Agent Assistant")
 
 # Step 1: Upload PDF folder path
-folder_path = st.text_input("📂 Enter the folder path containing insurance PDFs:")
+folder_path = st.text_input(" Enter the folder path containing insurance PDFs:")
 
 if folder_path:
-    st.info("Processing documents... please wait ⏳")
+    st.info("Processing documents... please wait ")
     start_time = time.time()
 
     # Process PDFs
     index, chunks, sources, chunk_ids = process_documents(folder_path)
     processing_time = time.time() - start_time
 
-    st.success("✅ Documents processed successfully!")
+    st.success(" Documents processed successfully!")
 
     # Show Phase 1 Summary
-    st.subheader("📊 Document Processing Summary")
+    st.subheader(" Document Processing Summary")
     st.json({
         "total_documents": len([f for f in os.listdir(folder_path) if f.endswith('.pdf')]),
         "total_chunks": len(chunks),
@@ -39,14 +39,14 @@ if folder_path:
     })
 
     # Step 2: Ask Query
-    query = st.text_input("💬 Ask a customer query:")
+    query = st.text_input(" Ask a customer query:")
     results = []
     if query:
-        st.info("🔍 Searching for relevant information...")
+        st.info(" Searching for relevant information...")
         model = SentenceTransformer('all-MiniLM-L6-v2')
         results = search_similar_chunks(query, model, index, chunks, sources, chunk_ids)
 
-        st.subheader("💡 Top Matches:")
+        st.subheader(" Top Matches:")
         for r in results:
             st.markdown(f"**Chunk ID:** {r['chunk_id']}")
             st.markdown(f"**Source:** {r['source']}")
@@ -54,29 +54,29 @@ if folder_path:
             st.write(f"**Text Preview:** {r['text_preview']}")
             st.markdown("---")
 
-    st.caption("✅ Phase 1 and Phase 2 completed successfully.")
+    st.caption(" Phase 1 and Phase 2 completed successfully.")
 
     # Step 3: Generate Recommendation (LLM)
-    st.header("🤖 Personalized Insurance Recommendation")
+    st.header(" Personalized Insurance Recommendation")
 
-    profile_text = st.text_area("✍️ Enter customer profile (age, income, family size, coverage needs, etc.):")
+    profile_text = st.text_area(" Enter customer profile (age, income, family size, coverage needs, etc.):")
 
-    if st.button("🚀 Generate Recommendation"):
-        st.info("Generating recommendation using Mistral... please wait ⏳")
+    if st.button(" Generate Recommendation"):
+        st.info("Generating recommendation using Mistral... please wait ")
 
         top_chunks = [r["text_preview"] for r in results[:5]] if query else chunks[:5]
         rec = generate_recommendation(profile_text, top_chunks)
 
-        st.subheader("📋 Recommendation Result")
+        st.subheader(" Recommendation Result")
         st.json(rec)
 
         # Allow user to download recommendation report
         st.download_button(
-            "📥 Download Recommendation Report",
+            " Download Recommendation Report",
             json.dumps(rec, indent=4),
             file_name="recommendation_report.json",
             mime="application/json"
         )
 
 else:
-    st.warning("⚠️ Please enter a valid folder path to continue.")
+    st.warning(" Please enter a valid folder path to continue.")
