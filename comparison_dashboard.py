@@ -31,7 +31,7 @@ def run_embedding_test(model_name, text, results):
             "Model": model_name,
             "Vector Dimension": None,
             "Time Taken (s)": None,
-            "Status": f"❌ Failed: {str(e)}"
+            "Status": f" Failed: {str(e)}"
         })
 
 
@@ -68,13 +68,13 @@ def compare_llm_models_fast(prompt):
                 results.append({
                     "Model": model,
                     "Generation Time (s)": duration,
-                    "Status": "✅ Success"
+                    "Status": " Success"
                 })
             else:
                 results.append({
                     "Model": model,
                     "Generation Time (s)": 0,
-                    "Status": f"❌ Failed ({response.status_code})"
+                    "Status": f" Failed ({response.status_code})"
                 })
         except requests.exceptions.Timeout:
             results.append({
@@ -125,33 +125,33 @@ def summarize_results(emb_results, llm_results):
 # --------------------------------------------
 # STEP 4: Streamlit Dashboard
 # --------------------------------------------
-st.set_page_config(page_title="⚡ Fast AI Model Comparison", layout="centered")
-st.title("⚡ AI Insurance Agent — Fast Model Comparison Dashboard")
+st.set_page_config(page_title=" Fast AI Model Comparison", layout="centered")
+st.title(" AI Insurance Agent — Fast Model Comparison Dashboard")
 
-if st.button("🚀 Run Optimized Model Comparison"):
+if st.button(" Run Optimized Model Comparison"):
     with st.spinner("Benchmarking models... ⏳"):
         text = "Insurance protects against health emergencies."
         emb_results = compare_embedding_models_fast(text)
         llm_results = compare_llm_models_fast("Recommend a health plan for a 35-year-old.")
         summary = summarize_results(emb_results, llm_results)
 
-    st.success("✅ Model comparison completed quickly!")
-    st.text_area("📄 Summary Report", "\n".join(summary), height=250)
+    st.success(" Model comparison completed quickly!")
+    st.text_area(" Summary Report", "\n".join(summary), height=250)
 
     df_emb = pd.DataFrame(emb_results)
     df_llm = pd.DataFrame(llm_results)
 
-    st.subheader("🧩 Embedding Model Speed (s)")
+    st.subheader(" Embedding Model Speed (s)")
     fig1, ax1 = plt.subplots()
     ax1.bar(df_emb["Model"], df_emb["Time Taken (s)"], color=["#4CAF50", "#FFC107"])
     st.pyplot(fig1)
 
-    st.subheader("🤖 LLM Model Response Time (s)")
+    st.subheader(" LLM Model Response Time (s)")
     fig2, ax2 = plt.subplots()
     ax2.bar(df_llm["Model"], df_llm["Generation Time (s)"], color=["#2196F3", "#E91E63", "#9C27B0", "#00BCD4"])
     st.pyplot(fig2)
 
-    st.download_button("📥 Download Report", "\n".join(summary), file_name="comparison_report.txt")
+    st.download_button(" Download Report", "\n".join(summary), file_name="comparison_report.txt")
 
 else:
     st.info("Click above to start fast model comparison.") 
