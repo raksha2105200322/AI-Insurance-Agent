@@ -24,7 +24,7 @@ def run_embedding_test(model_name, text, results):
             "Model": model_name,
             "Vector Dimension": model.get_sentence_embedding_dimension(),
             "Time Taken (s)": round(time.time() - start, 2),
-            "Status": "✅ Success"
+            "Status": " Success"
         })
     except Exception as e:
         results.append({
@@ -107,10 +107,10 @@ def summarize_results(emb_results, llm_results):
         f"OS: {os_info}",
         f"RAM: {ram_gb} GB",
         "",
-        f"🏆 Best Embedding Model: {best_emb['Model']}",
-        f"🏆 Best LLM Model: {best_llm['Model']}",
+        f" Best Embedding Model: {best_emb['Model']}",
+        f" Best LLM Model: {best_llm['Model']}",
         "",
-        "📋 Recommendation:",
+        " Recommendation:",
         f"- For low RAM (<8GB): phi",
         f"- For balanced systems (8–12GB): mistral",
         f"- For high RAM (>12GB): gemma3:4b"
