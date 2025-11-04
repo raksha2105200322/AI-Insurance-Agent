@@ -36,7 +36,7 @@ def run_embedding_test(model_name, text, results):
 
 
 def compare_embedding_models_fast(sample_text):
-    models = ["all-MiniLM-L6-v2", "all-mpnet-base-v2"]
+    models = ["all-MiniLM-L6-v2"]
     threads, results = [], []
     for model in models:
         t = threading.Thread(target=run_embedding_test, args=(model, sample_text, results))

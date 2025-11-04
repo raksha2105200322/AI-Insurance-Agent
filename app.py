@@ -62,9 +62,9 @@ if folder_path:
     profile_text = st.text_area(" Enter customer profile (age, income, family size, coverage needs, etc.):")
 
     if st.button(" Generate Recommendation"):
-        st.info("Generating recommendation using Mistral... please wait ")
+        st.info("Generating recommendation using gemma3:4b ... please wait ")
 
-        top_chunks = [r["text_preview"] for r in results[:5]] if query else chunks[:5]
+        top_chunks = [r["text_preview"] for r in results[:3]] if query else chunks[:3]
         rec = generate_recommendation(profile_text, top_chunks)
 
         st.subheader(" Recommendation Result")

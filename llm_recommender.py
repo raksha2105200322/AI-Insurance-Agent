@@ -30,7 +30,7 @@ def generate_recommendation(profile_text, retrieved_chunks):
 
     Return output in structured JSON:
     {{
-        "llm_model": "mistral",
+        "llm_model": "gemma3:4b",
         "recommendations": [
             {{
                 "product_name": "...",
@@ -51,7 +51,7 @@ def generate_recommendation(profile_text, retrieved_chunks):
         #  Using Mistral model from Ollama
         response = requests.post(
     "http://localhost:11434/api/generate",
-    json={"model": "mistral", "prompt": prompt},
+    json={"model": "gemma3:4b", "prompt": prompt},
 )
 
         end = time.time()
@@ -73,7 +73,7 @@ def generate_recommendation(profile_text, retrieved_chunks):
             try:
                 parsed = json.loads(output_text)
             except Exception:
-                parsed = {"llm_model": "mistral", "raw_output": output_text}
+                parsed = {"llm_model": "gemma3:4b", "raw_output": output_text}
 
             parsed["generation_time"] = f"{end - start:.2f} seconds"
             return parsed

@@ -6,11 +6,11 @@ def search_similar_chunks(query, model, index, chunks, sources, chunk_ids, top_k
     query_embedding = model.encode([query])
     query_embedding = np.array(query_embedding, dtype=np.float32)
 
-    #  FAISS expects a 2D float32 array (1, dim)
+    # FAISS expects a 2D float32 array (1, dim)
     if query_embedding.ndim == 1:
         query_embedding = np.expand_dims(query_embedding, axis=0)
 
-    #  Make sure top_k is an integer, not a list
+    # Make sure top_k is an integer, not a list
     top_k = int(top_k)
 
     # Perform similarity search
@@ -24,5 +24,5 @@ def search_similar_chunks(query, model, index, chunks, sources, chunk_ids, top_k
             "source": sources[idx],
             "text_preview": chunks[idx][:300]
         })
+    
     return results
- 
